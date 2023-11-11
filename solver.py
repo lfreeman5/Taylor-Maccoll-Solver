@@ -59,24 +59,24 @@ solveConeAngle(np.radians(20), 14)
 # plt.legend()
 # plt.show()
 
-# ###Plotting oblique shock relations
-# mach_numbers = [2, 3, 4, 5, 10]
-# beta_range = np.arange(0, 91, 1)
+###Plotting oblique shock relations
+mach_numbers = [2, 3, 4, 5, 10]
+beta_range = np.radians(np.arange(0, 91, 1))  # Convert beta to radians
 
-# # Plot the results for each Mach number
-# for mach_number in mach_numbers:
-#     deflection_results = [oblique_shock_relations(beta, mach_number) for beta in beta_range]
+# Plot the results for each Mach number
+for mach_number in mach_numbers:
+    deflection_results = [np.degrees(oblique_shock_relations(beta, mach_number)[0]) for beta in beta_range]
 
-#     # Filter data for beta <= 45 degrees and deflection > 0
-#     beta_filtered = [beta for i, beta in enumerate(beta_range) if deflection_results[i] > 0]
-#     deflection_filtered = [deflection for deflection in deflection_results if deflection > 0]
+    # Filter data for deflection > 0
+    beta_filtered = [np.degrees(beta) for i, beta in enumerate(beta_range) if deflection_results[i] > 0]
+    deflection_filtered = [deflection for deflection in deflection_results if deflection > 0]
 
-#     # Plot the filtered results
-#     plt.plot(deflection_filtered, beta_filtered, label=f'Mach {mach_number}')
+    # Plot the filtered results with flipped axes
+    plt.plot(deflection_filtered, beta_filtered, label=f'Mach {mach_number}')
 
-# plt.title('Oblique Shock Deflection Angle vs. Beta')
-# plt.xlabel('Deflection Angle (degrees)')
-# plt.ylabel('Beta (degrees)')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+plt.title('Oblique Shock Deflection Angle vs. Beta')
+plt.xlabel('Deflection Angle (degrees)')
+plt.ylabel('Beta (degrees)')
+plt.legend()
+plt.grid(True)
+plt.show()
