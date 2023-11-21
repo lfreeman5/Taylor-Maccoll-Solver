@@ -40,16 +40,16 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     v_theta_values = results.T[1]
 
     # Plot v_r and v_theta against theta_values [Disabled for speed]
-    # plt.figure(figsize=(8, 6))
-    # plt.plot(theta_values, v_r_values, label='v_r')
-    # plt.plot(theta_values, v_theta_values, label='v_theta')
-    # plt.xlabel('Theta Values')
-    # plt.ylabel('Velocity')
-    # plt.title('v_r and v_theta vs Theta Values')
-    # plt.legend()
-    # plt.ylim(-0.4, 0.4)
-    # plt.grid(True)
-    # plt.show()
+    plt.figure(figsize=(8, 6))
+    plt.plot(theta_values, v_r_values, label='v_r')
+    plt.plot(theta_values, v_theta_values, label='v_theta')
+    plt.xlabel('Theta Values')
+    plt.ylabel('Velocity')
+    plt.title(f'v_r and v_theta vs Theta Values\nM{mach} Beta {beta}')
+    plt.legend()
+    plt.ylim(-0.4, 0.4)
+    plt.grid(True)
+    plt.show()
 
 
     # Find the index where v_theta changes sign
@@ -71,6 +71,7 @@ def findShockParameters(theta, mach, gamma=1.4):
     for angle in angles: #Goes from 90 to zero
         #Run solveConeAngle with beta, if it fails then it didnt' converge to a solution. The first time it converges, great.
         try:
+            print('Trying angle ', angle, 'at M=', mach)
             coneAngle, surfaceMach = solveConeAngle(angle, mach)
             if coneAngle < theta: #The cone angles will start large because we start at a deflection of 90 degrees
                 break
@@ -91,7 +92,12 @@ def findShockParameters(theta, mach, gamma=1.4):
 # solveConeAngle(np.radians(30), 5)
 # solveConeAngle(np.radians(40), 4)
 # solveConeAngle(np.radians(20), 14)
-findShockParameters(np.radians(25), 32)
+print(solveConeAngle(1.5, 21))
+print(solveConeAngle(1.4, 21))
+print(solveConeAngle(1.3, 21))
+print(solveConeAngle(1.2, 21))
+print(solveConeAngle(1.1, 21))
+# findShockParameters(np.radians(25), 32)
 # solveConeAngle(np.radians(90), 2.2)
 
 
@@ -103,24 +109,24 @@ findShockParameters(np.radians(25), 32)
 # plt.legend()
 # plt.show()
 
-###Plotting oblique shock relations
-mach_numbers = [2, 3, 4, 5, 10]
-beta_range = np.radians(np.arange(0, 91, 0.1))  # Convert beta to radians
+# ###Plotting oblique shock relations
+# mach_numbers = [2, 3, 4, 5, 10]
+# beta_range = np.radians(np.arange(0, 91, 0.1))  # Convert beta to radians
 
-# Plot the results for each Mach number
-for mach_number in mach_numbers:
-    deflection_results = [np.degrees(oblique_shock_relations(beta, mach_number)[0]) for beta in beta_range]
+# # Plot the results for each Mach number
+# for mach_number in mach_numbers:
+#     deflection_results = [np.degrees(oblique_shock_relations(beta, mach_number)[0]) for beta in beta_range]
 
-    # Filter data for deflection > 0
-    beta_filtered = [np.degrees(beta) for i, beta in enumerate(beta_range) if deflection_results[i] > 0]
-    deflection_filtered = [deflection for deflection in deflection_results if deflection > 0]
+#     # Filter data for deflection > 0
+#     beta_filtered = [np.degrees(beta) for i, beta in enumerate(beta_range) if deflection_results[i] > 0]
+#     deflection_filtered = [deflection for deflection in deflection_results if deflection > 0]
 
-    # Plot the filtered results with flipped axes
-    plt.plot(deflection_filtered, beta_filtered, label=f'Mach {mach_number}')
+#     # Plot the filtered results with flipped axes
+#     plt.plot(deflection_filtered, beta_filtered, label=f'Mach {mach_number}')
 
-plt.title('Oblique Shock Deflection Angle vs. Beta')
-plt.xlabel('Deflection Angle (degrees)')
-plt.ylabel('Beta (degrees)')
-plt.legend()
-plt.grid(True)
-plt.show()
+# plt.title('Oblique Shock Deflection Angle vs. Beta')
+# plt.xlabel('Deflection Angle (degrees)')
+# plt.ylabel('Beta (degrees)')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
