@@ -1,0 +1,6 @@
+def betaMax(mach, gamma):
+    #reads M_inf, gamma as parameters, returns betaMax in radians
+    #Calculates thetamax based on beta
+    #From 0 to betamax, run oblique shock relations to obtain theta for each beta (function of gamma, mach)
+    #If theta>0, store in table
+    return
