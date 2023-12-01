@@ -32,32 +32,16 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     [vR, vTheta] = postShock(m2, deflection, beta)
     # print(deflection, '<--deflection  m2-->', m2)
     # print(vR, '<--vR  vTheta-->',vTheta)
-
     s_0 = np.array([vR, -vTheta])
     theta_values = np.linspace(beta, 0.005, 200)
     results = odeint(taylorMaccoll, s_0, theta_values)
     v_r_values = results.T[0]
     v_theta_values = results.T[1]
-
-    # Plot v_r and v_theta against theta_values [Disabled for speed]
-    # plt.figure(figsize=(8, 6))
-    # plt.plot(theta_values, v_r_values, label='v_r')
-    # plt.plot(theta_values, v_theta_values, label='v_theta')
-    # plt.xlabel('Theta Values')
-    # plt.ylabel('Velocity')
-    # plt.title(f'v_r and v_theta vs Theta Values\nM{mach} Beta {beta}')
-    # plt.legend()
-    # plt.ylim(-0.4, 0.4)
-    # plt.grid(True)
-    # plt.show()
-
-
     # Find the index where v_theta changes sign
     change_point_index = np.where(np.diff(np.sign(v_theta_values)))[0][0]
     # Print the corresponding theta value
     theta_change_point = 1/3 * (theta_values[change_point_index] + theta_values[change_point_index+1] + theta_values[change_point_index-1])
     # print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_change_point)}')
-
     v_r_f = v_r_values[change_point_index]
     m_surf = np.sqrt((2/(gamma-1)) * (1/(1/(v_r_f**2) - 1)))
 
@@ -101,17 +85,36 @@ def findShockParameters(theta, mach, gamma=1.4):
         return
     
 
-# solveConeAngle(np.radians(45), 5)
-# solveConeAngle(np.radians(40), 5)
-# solveConeAngle(np.radians(35), 5)
-# solveConeAngle(np.radians(30), 5)
-# print(solveConeAngle(1.5, 21))
+print(solveConeAngle(np.deg2rad(22.149), 4))
 # print(solveConeAngle(1.4, 21))
 # print(solveConeAngle(1.3, 21))
 # print(solveConeAngle(1.2, 21))
 # print(solveConeAngle(1.1, 21))
-findShockParameters(np.radians(10), 5)
-# solveConeAngle(np.radians(90), 2.2)
+# findShockParameters(np.radians(20), 5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # # Plot the results
