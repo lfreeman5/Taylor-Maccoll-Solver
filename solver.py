@@ -19,12 +19,17 @@ def postShock(m2, deflection, beta):
     vPrimeTheta = np.sin(beta-deflection) * vPrime
     return [vPrimeR, vPrimeTheta]
 
-def taylorMaccoll(s, theta):
+def taylorMaccoll(theta, s, gamma=1.4):
     #theta is the polar coordinate, marching inwards
     #s is the state vector [v_r, v_theta]
-    gamma = 1.4
     v_r, v_theta = s
     return np.array([v_theta, (v_theta ** 2 * v_r - (gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) * (2 * v_r + v_theta / np.tan(theta))) / ((gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) - v_theta ** 2)])
+
+def stopCondition(theta, s):
+    v_r, v_theta = s
+    if(v_theta>0):
+        return 0
+stopCondition.terminal=True
 
 def solveConeAngle(beta, mach, gamma = 1.4):
     [deflection, m2] = oblique_shock_relations(beta, mach)
@@ -33,19 +38,26 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     # print(vR, '<--vR  vTheta-->',vTheta)
     s_0 = np.array([vR, -vTheta])
     theta_values = np.linspace(beta, 0.005, 15000)
-    results = odeint(taylorMaccoll, s_0, theta_values)
-    v_r_values = results.T[0]
-    v_theta_values = results.T[1]
+    # Define the solve_ivp options
+    sol = solve_ivp(taylorMaccoll, (beta, 0.005), s_0, t_eval=theta_values, events=[stopCondition])
+    v_r_values = sol.y[0]
+    v_theta_values = sol.y[1]
+    theta_values = sol.t
     # Find the index where v_theta changes sign
     change_point_index = np.where(np.diff(np.sign(v_theta_values)))[0][0]
-    # Print the corresponding theta value
+    # Print the coresponding theta value
     theta_change_point = 1/3 * (theta_values[change_point_index] + theta_values[change_point_index+1] + theta_values[change_point_index-1])
-    # print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_change_point)}')
+    # Print or visualize your results
+    print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_change_point)}')
     v_r_f = v_r_values[change_point_index]
     m_surf = np.sqrt((2/(gamma-1)) * (1/(1/(v_r_f**2) - 1)))
+    
     plt.plot(range(len(v_theta_values)), v_theta_values)
     plt.show()
+    
     return theta_change_point, m_surf
+
+
 
     
 def findShockParameters(theta_c, mach, gamma=1.4):
