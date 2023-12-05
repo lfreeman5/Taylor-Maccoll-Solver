@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
+import itertools
 
 def oblique_shock_relations(beta, m_inf):
     gamma = 1.4
@@ -31,7 +32,7 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     # print(deflection, '<--deflection  m2-->', m2)
     # print(vR, '<--vR  vTheta-->',vTheta)
     s_0 = np.array([vR, -vTheta])
-    theta_values = np.linspace(beta, 0.005, 200)
+    theta_values = np.linspace(beta, 0.005, 15000)
     results = odeint(taylorMaccoll, s_0, theta_values)
     v_r_values = results.T[0]
     v_theta_values = results.T[1]
@@ -85,11 +86,21 @@ for beta in betas:
     theta = solveConeAngle(beta, 5)[0]
     thetas.append(theta)
 
-print(betas)
-print(thetas)
+# Find the longest increasing section
+increasing_sections = [list(group) for _, group in itertools.groupby(enumerate(thetas), lambda x: x[1] > thetas[x[0] - 1] if x[0] > 0 else False)]
+longest_section = max(increasing_sections, key=len, default=[])
+
+# Extract the betas and thetas from the longest section
+longest_betas, longest_thetas = zip(*longest_section)
+# Extract the betas from the longest section
+longest_betas_indices = [index for index, _ in longest_section]
+longest_betas = [betas[index] for index in longest_betas_indices]
+
+print(longest_thetas)
 plt.plot(np.array(betas), np.array(thetas))
+plt.plot(longest_betas, longest_thetas)
 plt.title('Thetas vs. Betas')
 plt.grid(True)
 plt.show()
 
-findShockParameters(0.4, 5)
+# findShockParameters(0.4, 5)
