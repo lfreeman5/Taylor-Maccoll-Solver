@@ -42,7 +42,8 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     # print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_change_point)}')
     v_r_f = v_r_values[change_point_index]
     m_surf = np.sqrt((2/(gamma-1)) * (1/(1/(v_r_f**2) - 1)))
-
+    plt.plot(range(len(v_theta_values)), v_theta_values)
+    plt.show()
     return theta_change_point, m_surf
 
     
@@ -76,7 +77,7 @@ def findShockParameters(theta_c, mach, gamma=1.4):
         beta=beta_next
         i+=1
 
-
+solveConeAngle(np.deg2rad(15), 30)
 
 thetas = []
 betas = np.deg2rad(np.arange(7,80,0.25))
