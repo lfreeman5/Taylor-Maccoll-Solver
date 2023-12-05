@@ -19,12 +19,10 @@ def postShock(m2, deflection, beta):
     return [vPrimeR, vPrimeTheta]
 
 def taylorMaccoll(s, theta):
-    gamma = 1.4
-    v_r, v_theta = s
-    # print("V_Theta: ", v_theta)
-    # print("V_R: ", v_r)
     #theta is the polar coordinate, marching inwards
     #s is the state vector [v_r, v_theta]
+    gamma = 1.4
+    v_r, v_theta = s
     return np.array([v_theta, (v_theta ** 2 * v_r - (gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) * (2 * v_r + v_theta / np.tan(theta))) / ((gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) - v_theta ** 2)])
 
 def solveConeAngle(beta, mach, gamma = 1.4):
@@ -47,102 +45,50 @@ def solveConeAngle(beta, mach, gamma = 1.4):
 
     return theta_change_point, m_surf
 
-def findShockParameters(theta, mach, gamma=1.4):
-    #Paramters: theta is the cone angle, mach is freestream mach number
-    #Pass theta in radians, mach dimensionless
-    angles = np.linspace(np.pi/2, 0, 1000) #Deflection from 90 degrees to zero 
-    coneAngle = -1
-    goingDown = False
-    prevTheta = -1
-    coneAngle, surfaceMach = 0,0
-    beta=0
-    for angle in angles: #Goes from 90 to zero
-        #Run solveConeAngle with beta, if it fails then it didnt' converge to a solution. The first time it converges, great.
-        try:
-            # print('Trying angle ', np.degrees(angle), 'at M=', mach)
-            coneAngle, surfaceMach = solveConeAngle(angle, mach)
-            if not goingDown and coneAngle < prevTheta:
-                # print("Descending")
-                goingDown = True 
-            
-            if coneAngle < theta and goingDown: #The cone angles will start large because we start at a deflection of 90 degrees
-                beta = angle
-                break
-        except IndexError as e:
-            print(f"Error: {e}")
-            continue
-        prevTheta = coneAngle
-    if coneAngle == -1:
-        return "NO SOLUTION FOUND"
-    else:
-        #Using constitutive relationships find surface pressure
-        pressureRatio = (1 + surfaceMach**2 * (gamma - 1)/2) ** (gamma / (gamma - 1))
-        pressureCoefficient = 2/(gamma*mach**2) * (pressureRatio-1)
-        print("Surface Mach Number: ", surfaceMach)
-        print("Shock Angle: ", np.degrees(beta))
-        print("Surface Pressure Ratio for cone: ", pressureRatio)
-        print("Surface Pressure Coefficient for cone: ", pressureCoefficient)
-        return
     
+def findShockParameters(theta_c, mach, gamma=1.4):
+    beta_max = np.arccos(
+        np.sqrt(
+            (3 * mach**2 * gamma - np.sqrt((gamma + 1) * (8 * mach**2 * gamma +
+            mach**4 * gamma - 8 * mach**2 + mach**4 + 16)) - mach**2 + 4) / gamma
+        ) / (2 * mach)
+    )
 
-print(solveConeAngle(np.deg2rad(22.149), 4))
-# print(solveConeAngle(1.4, 21))
-# print(solveConeAngle(1.3, 21))
-# print(solveConeAngle(1.2, 21))
-# print(solveConeAngle(1.1, 21))
-# findShockParameters(np.radians(20), 5)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    #beta_0=betamax-1
+    #slope = (theta(betamax) - theta(betamax-2))/2
+    #next_beta = beta_0-theta(beta_0)/slope
+    #if next_beta < 0 next_beta = beta_0/2
+    beta = beta_max-0.02
+    i=0
+    while True:
+        stepSize = 0.02 * 0.9**i
+        t=solveConeAngle(beta, mach, gamma)[0]-theta_c
+        t_more = solveConeAngle(beta+stepSize,mach, gamma)[0]-theta_c
+        t_less = solveConeAngle(beta-stepSize,mach, gamma)[0]-theta_c
+        slope = (t_more-t_less)/(2*stepSize)
+        beta_next = beta - t/slope
+        if(beta_next<0):
+            beta_next=beta/2
+        print("Beta Guess: ", beta)
+        print("Slope: ", slope)
+        print("Guess at next Beta: ", beta_next)
+        input("Press enter to continue")
+        beta=beta_next
+        i+=1
 
 
-# # Plot the results
-# plt.plot(theta_values, v_r_values, label='v_r')
-# plt.plot(theta_values, v_theta_values, label='v_theta')
-# plt.xlabel('Theta')
-# plt.ylabel('Values')
-# plt.legend()
-# plt.show()
 
-###Plotting oblique shock relations
-# mach_numbers = [2, 3, 4, 5, 10]
-# beta_range = np.radians(np.arange(0, 91, 0.1))  # Convert beta to radians
+thetas = []
+betas = np.deg2rad(np.arange(7,80,0.25))
+for beta in betas:
+    theta = solveConeAngle(beta, 5)[0]
+    thetas.append(theta)
 
-# # Plot the results for each Mach number
-# for mach_number in mach_numbers:
-#     deflection_results = [np.degrees(oblique_shock_relations(beta, mach_number)[0]) for beta in beta_range]
+print(betas)
+print(thetas)
+plt.plot(np.array(betas), np.array(thetas))
+plt.title('Thetas vs. Betas')
+plt.grid(True)
+plt.show()
 
-#     # Filter data for deflection > 0
-#     # beta_filtered = [np.degrees(beta) for i, beta in enumerate(beta_range) if deflection_results[i] > 0]
-#     # deflection_filtered = [deflection for deflection in deflection_results if deflection > 0]
-
-#     # Plot the filtered results with flipped axes
-#     plt.plot(deflection_results, beta_range, label=f'Mach {mach_number}')
-
-# plt.title('Oblique Shock Deflection Angle vs. Beta')
-# plt.xlabel('Deflection Angle (degrees)')
-# plt.ylabel('Beta (degrees)')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+findShockParameters(0.4, 5)
