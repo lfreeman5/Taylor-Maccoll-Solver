@@ -27,8 +27,7 @@ def taylorMaccoll(theta, s, gamma=1.4):
 
 def stopCondition(theta, s):
     v_r, v_theta = s
-    if(v_theta>0):
-        return 0
+    return -v_theta
 stopCondition.terminal=True
 
 def solveConeAngle(beta, mach, gamma = 1.4):
@@ -39,28 +38,16 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     s_0 = np.array([vR, -vTheta])
     theta_values = np.linspace(beta, 0.005, 15000)
     # Define the solve_ivp options
-    sol = solve_ivp(taylorMaccoll, (beta, 0.005), s_0, t_eval=theta_values, events=[stopCondition])
-    v_r_values = sol.y[0]
-    v_theta_values = sol.y[1]
-    theta_values = sol.t
-    # Find the index where v_theta changes sign
-    change_point_index = np.where(np.diff(np.sign(v_theta_values)))[0][0]
-    # Print the coresponding theta value
-    theta_change_point = 1/3 * (theta_values[change_point_index] + theta_values[change_point_index+1] + theta_values[change_point_index-1])
-    # Print or visualize your results
-    print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_change_point)}')
-    v_r_f = v_r_values[change_point_index]
+    sol = solve_ivp(taylorMaccoll, (beta, 0.005), s_0, t_eval=theta_values, events=[stopCondition], method="Radau")
+    print(sol.t_events[0][0])
+    print(sol.y_events)
+    theta_f = sol.t_events[0][0]
+    v_r_f = sol.y_events[0][0]
+    print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_f)}')
     m_surf = np.sqrt((2/(gamma-1)) * (1/(1/(v_r_f**2) - 1)))
-    
-    plt.plot(range(len(v_theta_values)), v_theta_values)
-    plt.show()
-    
-    return theta_change_point, m_surf
+    return theta_f, m_surf
 
-
-
-    
-def findShockParameters(theta_c, mach, gamma=1.4):
+def findShockParameters(theta_c, mach, gamma=1.4): #Uses slightly modified Newton-Raphson method to iterate to a cone angle. Highly dependent on initial conditions.
     beta_max = np.arccos(
         np.sqrt(
             (3 * mach**2 * gamma - np.sqrt((gamma + 1) * (8 * mach**2 * gamma +
@@ -90,29 +77,37 @@ def findShockParameters(theta_c, mach, gamma=1.4):
         beta=beta_next
         i+=1
 
-solveConeAngle(np.deg2rad(15), 30)
+def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
+    betas = np.deg2rad(np.arange(5,90,resolution))
+    solvedBetas = []
+    thetas = []
+    for beta in betas:
+        print(beta)
+        try:
+            theta = solveConeAngle(beta, mach)[0]
+            thetas.append(theta)
+            solvedBetas.append(beta)
+        except IndexError as e:
+            print(f"For beta: {beta}, mach: {mach}, gamma: {gamma}, the ODE did not solve")
+    betas = solvedBetas
+    increasing_sections = [list(group) for _, group in itertools.groupby(enumerate(thetas), lambda x: x[1] > thetas[x[0] - 1] if x[0] > 0 else False)]
+    longest_section = max(increasing_sections, key=len, default=[])
+    longest_betas, longest_thetas = zip(*longest_section)
+    longest_betas_indices = [index for index, _ in longest_section]
+    longest_betas = [betas[index] for index in longest_betas_indices]
+    return (longest_betas, longest_thetas)
 
-thetas = []
-betas = np.deg2rad(np.arange(7,80,0.25))
-for beta in betas:
-    theta = solveConeAngle(beta, 5)[0]
-    thetas.append(theta)
+results={}
+for m in [6,8,12,16,20,25,35]:
+    results[m]={}
+    (results[m]['betas'], results[m]['thetas']) = generateThetaBeta(m)
+    plt.plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
 
-# Find the longest increasing section
-increasing_sections = [list(group) for _, group in itertools.groupby(enumerate(thetas), lambda x: x[1] > thetas[x[0] - 1] if x[0] > 0 else False)]
-longest_section = max(increasing_sections, key=len, default=[])
-
-# Extract the betas and thetas from the longest section
-longest_betas, longest_thetas = zip(*longest_section)
-# Extract the betas from the longest section
-longest_betas_indices = [index for index, _ in longest_section]
-longest_betas = [betas[index] for index in longest_betas_indices]
-
-print(longest_thetas)
-plt.plot(np.array(betas), np.array(thetas))
-plt.plot(longest_betas, longest_thetas)
-plt.title('Thetas vs. Betas')
+plt.title("Weak Shock Theta-Beta-M Plot for Conical flow")
 plt.grid(True)
+plt.legend()
 plt.show()
+
+
 
 # findShockParameters(0.4, 5)
