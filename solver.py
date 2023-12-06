@@ -6,10 +6,11 @@ import itertools
 
 def oblique_shock_relations(beta, m_inf):
     gamma = 1.4
-    m_inf_normal = m_inf * np.sin(beta)
-    m2_normal = np.sqrt((m_inf_normal**2 + 2/(gamma-1)) / (2 * gamma / (gamma -1) * (m_inf_normal**2) - 1))
-    deflection = np.arctan(2 / np.tan(beta) * (m_inf**2 * np.sin(beta) ** 2 - 1) / (m_inf ** 2 * (gamma + np.cos(2*beta)) +2) )
-    m2 = m2_normal/(np.sin(beta-deflection))
+    m_inf_normal = m_inf * np.sin(beta) #Anderson 4.7
+    m2_normal = np.sqrt((m_inf_normal**2 + 2/(gamma-1)) / (2 * gamma / (gamma -1) * (m_inf_normal**2) - 1)) #Anderson 4.10
+    deflection = np.arctan(2 / np.tan(beta) * (m_inf**2 * np.sin(beta) ** 2 - 1) / (m_inf ** 2 * (gamma + np.cos(2*beta)) +2) ) #Anderson 4.17
+    print(f"beta: {beta}, deflection: {deflection}")
+    m2 = m2_normal/(np.sin(beta-deflection)) #Anderson 4.12
     return [deflection, m2]
 
 def postShock(m2, deflection, beta):
@@ -19,16 +20,20 @@ def postShock(m2, deflection, beta):
     vPrimeTheta = np.sin(beta-deflection) * vPrime
     return [vPrimeR, vPrimeTheta]
 
+THETA = -1
 def taylorMaccoll(theta, s, gamma=1.4):
     #theta is the polar coordinate, marching inwards
     #s is the state vector [v_r, v_theta]
+    global THETA
     v_r, v_theta = s
+    THETA=theta
+    # print(f"For theta: {theta}, v_theta: {v_theta}")
     return np.array([v_theta, (v_theta ** 2 * v_r - (gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) * (2 * v_r + v_theta / np.tan(theta))) / ((gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) - v_theta ** 2)])
 
 def stopCondition(theta, s):
     v_r, v_theta = s
     return -v_theta
-stopCondition.terminal=True
+# stopCondition.terminal=True
 
 def solveConeAngle(beta, mach, gamma = 1.4):
     [deflection, m2] = oblique_shock_relations(beta, mach)
@@ -38,12 +43,17 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     s_0 = np.array([vR, -vTheta])
     theta_values = np.linspace(beta, 0.005, 15000)
     # Define the solve_ivp options
-    sol = solve_ivp(taylorMaccoll, (beta, 0.005), s_0, t_eval=theta_values, events=[stopCondition], method="Radau")
-    print(sol.t_events[0][0])
-    print(sol.y_events)
+    sol = solve_ivp(taylorMaccoll, (beta, 0.005), s_0, events=[stopCondition], method="Radau")
+
+    # plt.plot(sol.t, sol.y[1])
+    # plt.show()
+    # print(f"Termination condition: {sol.status}, message: {sol.message}")
+    # print(sol.t_events[0][0])
+    # print(sol.y_events)
+
     theta_f = sol.t_events[0][0]
     v_r_f = sol.y_events[0][0]
-    print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_f)}')
+    # print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_f)}')
     m_surf = np.sqrt((2/(gamma-1)) * (1/(1/(v_r_f**2) - 1)))
     return theta_f, m_surf
 
@@ -78,7 +88,9 @@ def findShockParameters(theta_c, mach, gamma=1.4): #Uses slightly modified Newto
         i+=1
 
 def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
-    betas = np.deg2rad(np.arange(5,90,resolution))
+    global THETA
+    beta_min = np.arcsin(np.sqrt((gamma-1)/(2*gamma) * 1/(mach**2)))
+    betas = np.deg2rad(np.arange(np.rad2deg(beta_min+0.0001),90,resolution))
     solvedBetas = []
     thetas = []
     for beta in betas:
@@ -89,6 +101,10 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
             solvedBetas.append(beta)
         except IndexError as e:
             print(f"For beta: {beta}, mach: {mach}, gamma: {gamma}, the ODE did not solve")
+            thetas.append(THETA)
+            THETA = -1
+            solvedBetas.append(beta)
+
     betas = solvedBetas
     increasing_sections = [list(group) for _, group in itertools.groupby(enumerate(thetas), lambda x: x[1] > thetas[x[0] - 1] if x[0] > 0 else False)]
     longest_section = max(increasing_sections, key=len, default=[])
@@ -97,11 +113,18 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
     longest_betas = [betas[index] for index in longest_betas_indices]
     return (longest_betas, longest_thetas)
 
-results={}
-for m in [6,8,12,16,20,25,35]:
-    results[m]={}
-    (results[m]['betas'], results[m]['thetas']) = generateThetaBeta(m)
-    plt.plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
+
+try:
+    solveConeAngle(np.deg2rad(0.1), 5)
+except IndexError as e:
+    print(f"The ODE did not solve")
+    print(f"Try theta: {THETA}")
+
+# results={}
+# for m in [2, 5]:
+#     results[m]={}
+#     (results[m]['betas'], results[m]['thetas']) = generateThetaBeta(m, resolution=1)
+#     plt.plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
 
 plt.title("Weak Shock Theta-Beta-M Plot for Conical flow")
 plt.grid(True)
