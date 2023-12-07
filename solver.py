@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
 import itertools
+import pandas as pd
 
 def oblique_shock_relations(beta, m_inf):
     gamma = 1.4
@@ -98,14 +99,16 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
             continue
         break
     print("Minimum Beta: ", np.rad2deg(beta_min))
-    betas = np.deg2rad(np.arange(np.rad2deg(beta_min),90,resolution))
+    betas = np.deg2rad(np.arange(np.rad2deg(beta_min)**(1/3),90**(1/3),resolution)**3)
     solvedBetas = []
     thetas = []
+    msurfs = []
     for beta in betas:
         print(beta)
         try:
-            theta = solveConeAngle(beta, mach)[0]
+            (theta, msurf) = solveConeAngle(beta, mach)
             thetas.append(theta)
+            msurfs.append(msurf)
             solvedBetas.append(beta)
         except IndexError as e:
             print(f"For beta: {beta}, mach: {mach}, gamma: {gamma}, the ODE did not solve")
@@ -117,6 +120,17 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
     longest_betas, longest_thetas = zip(*longest_section)
     longest_betas_indices = [index for index, _ in longest_section]
     longest_betas = [betas[index] for index in longest_betas_indices]
+    longest_machs = [msurfs[index] for index in longest_betas_indices]
+    plt.plot(longest_thetas, longest_machs)
+    plt.title("Theta vs. Msurf")
+    plt.show()
+    data = {'thetas': longest_thetas, 'machs': longest_machs}
+    df = pd.DataFrame(data)
+
+    # Display the table
+    print(df)
+
+
     return (longest_betas, longest_thetas)
 
 
