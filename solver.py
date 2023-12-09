@@ -6,6 +6,7 @@ import itertools
 import pandas as pd
 import json 
 
+
 def longest_increasing_subsequence_indices(arr):
     def increasing_subsequences():
         start, current_length = 0, 1
@@ -22,8 +23,7 @@ def longest_increasing_subsequence_indices(arr):
     longest_subsequence_indices = max(all_subsequences, key=lambda x: x[1] - x[0], default=(0, 0))
     return longest_subsequence_indices
 
-def oblique_shock_relations(beta, m_inf):
-    gamma = 1.4
+def oblique_shock_relations(beta, m_inf, gamma=1.4):
     m_inf_normal = m_inf * np.sin(beta) #Anderson 4.7
     m2_normal = np.sqrt((m_inf_normal**2 + 2/(gamma-1)) / (2 * gamma / (gamma -1) * (m_inf_normal**2) - 1)) #Anderson 4.10
     deflection = np.arctan(2 / np.tan(beta) * (m_inf**2 * np.sin(beta) ** 2 - 1) / (m_inf ** 2 * (gamma + np.cos(2*beta)) +2) ) #Anderson 4.17
@@ -31,38 +31,36 @@ def oblique_shock_relations(beta, m_inf):
     m2 = m2_normal/(np.sin(beta-deflection)) #Anderson 4.12
     return [deflection, m2]
 
-def postShock(m2, deflection, beta):
-    gamma = 1.4
+def postShock(m2, deflection, beta, gamma=1.4):
     vPrime = (2/((gamma - 1) * m2 * m2) + 1) ** (-0.5)
     vPrimeR = np.cos(beta-deflection) * vPrime 
     vPrimeTheta = np.sin(beta-deflection) * vPrime
     return [vPrimeR, vPrimeTheta]
 
-def taylorMaccoll(theta, s):
-    global GAMMA
+def taylorMaccoll(theta, s, gamma):
     #theta is the polar coordinate, marching inwards
     #s is the state vector [v_r, v_theta]
     v_r, v_theta = s
     # print(f"For theta: {theta}, v_theta: {v_theta}")
-    return np.array([v_theta, (v_theta ** 2 * v_r - (GAMMA - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) * (2 * v_r + v_theta / np.tan(theta))) / ((GAMMA - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) - v_theta ** 2)])
+    return np.array([v_theta, (v_theta ** 2 * v_r - (gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) * (2 * v_r + v_theta / np.tan(theta))) / ((gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) - v_theta ** 2)])
 
-def stopCondition(theta, s):
+def stopCondition(theta, s, _):
     v_r, v_theta = s
     return -v_theta
-# stopCondition.terminal=True
 
 def solveConeAngle(beta, mach, gamma = 1.4):
-    global GAMMA
-    GAMMA=gamma
-    [deflection, m2] = oblique_shock_relations(beta, mach)
-    [vR, vTheta] = postShock(m2, deflection, beta)
+    # print(f"solveConeAngle Gamma {GAMMA}")
+    [deflection, m2] = oblique_shock_relations(beta, mach, gamma)
+    [vR, vTheta] = postShock(m2, deflection, beta, gamma)
     # print(deflection, '<--deflection  m2-->', m2)
     # print(vR, '<--vR  vTheta-->',vTheta)
     s_0 = np.array([vR, -vTheta])
     # Define the solve_ivp options
-    sol = solve_ivp(taylorMaccoll, (beta, 0.0005), s_0, events=[stopCondition], method="BDF", atol=1e-10, rtol=1e-10)
+    sol = solve_ivp(taylorMaccoll, (beta, 0.0005), s_0, events=[stopCondition], method="BDF", atol=1e-10, rtol=1e-10, args=(gamma,))
 
     # plt.plot(sol.t, sol.y[1])
+    # plt.grid(True)
+    # plt.title(f"Theta-V_theta plot for B {np.rad2deg(beta)} and M{mach} and g{GAMMA}")
     # plt.show()
     # print(f"Termination condition: {sol.status}, message: {sol.message}")
     # print(sol.t_events[0][0])
@@ -110,22 +108,23 @@ def findShockParameters(theta_c, mach, gamma=1.4): #Uses slightly modified Newto
 
 def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
     #Implementation of Bisection method to rootfind minimum beta
+    # print(f"GTB Gamma: {gamma}")
     b_u=np.deg2rad(90)
     b_l=np.deg2rad(0)
     for _ in range(25):
         try:
             b_h=(b_u+b_l)/2
             # print(f"Trying Beta: {np.rad2deg(b_h)}")
-            solveConeAngle(b_h, mach)
+            solveConeAngle(b_h, mach, gamma=gamma)
             #If code gets here, the halfway point is still valid. So the new upper is the halfway
             b_u=b_h
         except (IndexError, ValueError) as e:
             #If it fails, the halfway point is below beta_min, so it's the new lower bound
             b_l=b_h
     beta_min = b_u
-    # print("Minimum Beta: ", np.rad2deg(beta_min))
-    # t,_=solveConeAngle(beta_min, mach)
-    # print(f"Minimum theta: {np.rad2deg(t)}")
+    print("Minimum Beta: ", np.rad2deg(beta_min))
+    t,_=solveConeAngle(beta_min, mach)
+    print(f"Minimum theta: {np.rad2deg(t)}")
 
     betas = np.deg2rad(np.geomspace(np.rad2deg(beta_min), 90, num=140))
     solvedBetas = []
@@ -157,20 +156,17 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
     # plt.show()
     return (longest_betas, longest_thetas, longest_machs)
 
-# try:
-#     t, _ = np.rad2deg(solveConeAngle(0.20135, 5))
-#     print(f"Solved Theta: {t}")
-# except (IndexError, ValueError) as e:
-#     print(f"The ODE did not solve")
 
-# generateThetaBeta(2.5)
+# generateThetaBeta(5,gamma=1.2)
+
+
 
 results={}
 fig, axs = plt.subplots(1, 2, figsize=(8, 10))
 
-for m in [2.5,4,6.1]:
+for m in [2.5,4,6,8,15]:
     results[m]={}
-    (results[m]['betas'], results[m]['thetas'], results[m]['surface_machs']) = generateThetaBeta(m, resolution=0.05)
+    (results[m]['betas'], results[m]['thetas'], results[m]['surface_machs']) = generateThetaBeta(m, resolution=0.05, gamma=1.1)
     axs[0].plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
     axs[1].plot(results[m]['thetas'], results[m]['surface_machs'], label=f"Mach {m}")
 
@@ -181,20 +177,18 @@ axs[1].legend()
 plt.show()
 
 
-results = {}
-for g in [1.1,1.2,1.3,1.4]:
-    results[g]={}
-    for m in [2,4,8,10]:
-        print(f"Running at M{m}, gamma={g}")
-        results[g][m]={}
-        (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
+# results = {}
+# for g in [1.1,1.2,1.3,1.4]:
+#     results[g]={}
+#     for m in [2,4,8,10]:
+#         print(f"Running at M{m}, gamma={g}")
+#         results[g][m]={}
+#         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
 
-# Specify the file path for the JSON file
-json_file_path = "results.json"
+# json_file_path = "results.json"
+# with open(json_file_path, 'w') as json_file:
+#     json.dump(results, json_file, indent=2)
 
-# Write the dictionary to the JSON file
-with open(json_file_path, 'w') as json_file:
-    json.dump(results, json_file, indent=2)
-
-print(f"Results exported to {json_file_path}")
+# print(f"Results exported to {json_file_path}")
  
+

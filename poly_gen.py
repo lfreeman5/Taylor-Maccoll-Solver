@@ -27,6 +27,7 @@ for g, g_dict in data.items():
 
 orders = [2,3,6] #Order: gamma, mach, theta
 coefficients, r2_value = multivariablePolynomialFit(orders, independent_variables, dependent_betas)
-test_ind = [1.4,67,0.2]
+print(coefficients)
+test_ind = [1.2,10,0.2]
 predictedBeta = multivariablePolynomialFunction(coefficients, orders, test_ind)
 print(predictedBeta)
