@@ -55,8 +55,8 @@ def solveConeAngle(beta, mach, gamma = 1.4):
     # print(deflection, '<--deflection  m2-->', m2)
     # print(vR, '<--vR  vTheta-->',vTheta)
     s_0 = np.array([vR, -vTheta])
-    # Define the solve_ivp options
-    sol = solve_ivp(taylorMaccoll, (beta, 0.0005), s_0, events=[stopCondition], method="BDF", atol=1e-10, rtol=1e-10, args=(gamma,))
+    # Solve_IVP should use an implicit method. I have had luck with Radau and BDF with low tolerances
+    sol = solve_ivp(taylorMaccoll, (beta, 0.0005), s_0, events=[stopCondition], method="Radau", atol=1e-10, rtol=1e-10, args=(gamma,))
 
     # plt.plot(sol.t, sol.y[1])
     # plt.grid(True)
@@ -122,9 +122,9 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
             #If it fails, the halfway point is below beta_min, so it's the new lower bound
             b_l=b_h
     beta_min = b_u
-    print("Minimum Beta: ", np.rad2deg(beta_min))
+    # print("Minimum Beta: ", np.rad2deg(beta_min))
     t,_=solveConeAngle(beta_min, mach)
-    print(f"Minimum theta: {np.rad2deg(t)}")
+    # print(f"Minimum theta: {np.rad2deg(t)}")
 
     betas = np.deg2rad(np.geomspace(np.rad2deg(beta_min), 90, num=140))
     solvedBetas = []
@@ -161,34 +161,47 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
 
 
 
-results={}
-fig, axs = plt.subplots(1, 2, figsize=(8, 10))
+# results={}
+# fig, axs = plt.subplots(1, 2, figsize=(8, 10))
 
-for m in [2.5,4,6,8,15]:
-    results[m]={}
-    (results[m]['betas'], results[m]['thetas'], results[m]['surface_machs']) = generateThetaBeta(m, resolution=0.05, gamma=1.1)
-    axs[0].plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
-    axs[1].plot(results[m]['thetas'], results[m]['surface_machs'], label=f"Mach {m}")
+# for m in [2.5,4,6,8,15]:
+#     results[m]={}
+#     (results[m]['betas'], results[m]['thetas'], results[m]['surface_machs']) = generateThetaBeta(m, resolution=0.05, gamma=1.1)
+#     axs[0].plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
+#     axs[1].plot(results[m]['thetas'], results[m]['surface_machs'], label=f"Mach {m}")
 
-axs[0].set_title('Betas vs. Thetas')
-axs[0].legend()
-axs[1].set_title('Surface Machs vs. Thetas')
-axs[1].legend()
-plt.show()
+# axs[0].set_title('Betas vs. Thetas')
+# axs[0].legend()
+# axs[1].set_title('Surface Machs vs. Thetas')
+# axs[1].legend()
+# plt.show()
 
 
 # results = {}
 # for g in [1.1,1.2,1.3,1.4]:
 #     results[g]={}
-#     for m in [2,4,8,10]:
+#     for m in [2,4,6,8,10,12,15,20,25,30]:
 #         print(f"Running at M{m}, gamma={g}")
 #         results[g][m]={}
 #         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
 
-# json_file_path = "results.json"
+# json_file_path = "results_Radau.json"
 # with open(json_file_path, 'w') as json_file:
 #     json.dump(results, json_file, indent=2)
 
 # print(f"Results exported to {json_file_path}")
  
+results = {}
+for g in [1.04, 1.08, 1.12, 1.16, 1.2 , 1.24, 1.28, 1.32, 1.36, 1.4 ]:
+    results[g]={}
+    for m in [10]:
+        print(f"Running at M{m}, gamma={g}")
+        results[g][m]={}
+        (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
 
+json_file_path = "results_gamma_sweep.json"
+with open(json_file_path, 'w') as json_file:
+    json.dump(results, json_file, indent=2)
+
+print(f"Results exported to {json_file_path}")
+ 
