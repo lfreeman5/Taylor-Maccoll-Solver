@@ -177,31 +177,31 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
 # plt.show()
 
 
-# results = {}
-# for g in [1.1,1.2,1.3,1.4]:
-#     results[g]={}
-#     for m in [2,4,6,8,10,12,15,20,25,30]:
-#         print(f"Running at M{m}, gamma={g}")
-#         results[g][m]={}
-#         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
-
-# json_file_path = "results_Radau.json"
-# with open(json_file_path, 'w') as json_file:
-#     json.dump(results, json_file, indent=2)
-
-# print(f"Results exported to {json_file_path}")
- 
 results = {}
-for g in [1.04, 1.08, 1.12, 1.16, 1.2 , 1.24, 1.28, 1.32, 1.36, 1.4 ]:
+for g in [1.1,1.2,1.3,1.4]:
     results[g]={}
-    for m in [10]:
+    for m in [2,4,6,8,10,12,15,20,25,30]:
         print(f"Running at M{m}, gamma={g}")
         results[g][m]={}
         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
 
-json_file_path = "results_gamma_sweep.json"
+json_file_path = "results_Radau.json"
 with open(json_file_path, 'w') as json_file:
     json.dump(results, json_file, indent=2)
 
 print(f"Results exported to {json_file_path}")
+ 
+# results = {}
+# for g in [1.04, 1.08, 1.12, 1.16, 1.2 , 1.24, 1.28, 1.32, 1.36, 1.4 ]:
+#     results[g]={}
+#     for m in [10]:
+#         print(f"Running at M{m}, gamma={g}")
+#         results[g][m]={}
+#         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
+
+# json_file_path = "results_gamma_sweep.json"
+# with open(json_file_path, 'w') as json_file:
+#     json.dump(results, json_file, indent=2)
+
+# print(f"Results exported to {json_file_path}")
  
