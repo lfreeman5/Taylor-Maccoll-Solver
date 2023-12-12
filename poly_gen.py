@@ -4,29 +4,26 @@ import pandas as pd
 import json
 from matplotlib import pyplot as plt
 
-def create_coeffs(json_name, orders=[3,4,6]):
+def create_coeffs(json_name, key, orders=[3,4,6]):
     with open(json_name, 'r') as json_file:
         data = json.load(json_file)
     
     independent_variables = []
-    dependent_surface_machs = []
-    dependent_betas = [] 
+    dependent_variables = []
 
     for g, g_dict in data.items():
         g=float(g)
         for j, (m, m_dict) in enumerate(g_dict.items()):
             m=float(m)
             thetas = m_dict['thetas']
-            betas = m_dict['betas']
-            surface_machs = m_dict['surface_machs']
+            dependent_vars = m_dict[key]
             for i in range(len(thetas)):
                 independent_variables.append([g,m,thetas[i]])
-                dependent_surface_machs.append(surface_machs[i])
-                dependent_betas.append(betas[i])
+                dependent_variables.append(dependent_vars[i])
 
-    beta_coefficients, beta_r2_value = multivariablePolynomialFit(orders, independent_variables, dependent_betas)
-    sm_coefficients, sm_r2_value = multivariablePolynomialFit(orders, independent_variables, dependent_surface_machs)
-    return beta_coefficients, sm_coefficients
+
+    coefficients, r2_value = multivariablePolynomialFit(orders, independent_variables, dependent_variables)
+    return coefficients
 
 def evaluate_function(coeffs, input_vector, orders=[3,4,6]): #input_vector takes the form [gamma, mach, theta]
     return multivariablePolynomialFunction(coeffs, orders, input_vector)

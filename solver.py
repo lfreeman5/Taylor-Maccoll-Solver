@@ -23,6 +23,21 @@ def longest_increasing_subsequence_indices(arr):
     longest_subsequence_indices = max(all_subsequences, key=lambda x: x[1] - x[0], default=(0, 0))
     return longest_subsequence_indices
 
+def tangent_cone_pressure_coefficient(m_inf, m_surf, beta, gamma):
+    # Equations from http://mae-nas.eng.usu.edu/MAE_6530_Web/New_Course/Section7/section2.2.1.pdf
+    # CP from pressure ratio is 9.10 in Anderson Compressible
+
+    mn_inf = m_inf * np.sin(beta)
+    mn_post = np.sqrt((1 + (gamma - 1) / 2 * mn_inf ** 2) / (gamma * mn_inf ** 2 - (gamma - 1) / 2))
+    deflection = np.arctan(2 * (m_inf ** 2 * np.sin(beta) ** 2 - 1) / 
+                            (np.tan(beta) * (2 + m_inf ** 2 * (gamma + np.cos(2 * beta)))))
+    m_post = mn_post / np.sin(beta - deflection)
+    pressure_ratio = ((1 + (gamma - 1) / 2 * m_post ** 2) / (1 + (gamma - 1) / 2 * m_surf ** 2)) ** (
+            gamma / (gamma - 1)) * (
+                             1 + 2 * gamma / (gamma + 1) * (m_inf ** 2 * np.sin(beta) ** 2 - 1))
+    cp = 2 / (gamma * m_inf ** 2) * (pressure_ratio - 1)
+    return cp
+
 def oblique_shock_relations(beta, m_inf, gamma=1.4):
     m_inf_normal = m_inf * np.sin(beta) #Anderson 4.7
     m2_normal = np.sqrt((m_inf_normal**2 + 2/(gamma-1)) / (2 * gamma / (gamma -1) * (m_inf_normal**2) - 1)) #Anderson 4.10
@@ -178,30 +193,21 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
 
 
 results = {}
-for g in [1.1,1.2,1.3,1.4]:
+for g in [1.01, 1.05, 1.1, 1.2, 1.3, 1.4]:
     results[g]={}
     for m in [2,4,6,8,10,12,15,20,25,30]:
         print(f"Running at M{m}, gamma={g}")
         results[g][m]={}
         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
-
-json_file_path = "results_Radau.json"
+        results[g][m]['cps'] = tangent_cone_pressure_coefficient(
+            np.array([m] * len(results[g][m]['thetas'])),
+            np.array(results[g][m]['surface_machs']),
+            np.array(results[g][m]['betas']),
+            np.array([g] * len(results[g][m]['thetas']))
+        ).tolist()
+json_file_path = "Results_Big.json"
 with open(json_file_path, 'w') as json_file:
     json.dump(results, json_file, indent=2)
 
 print(f"Results exported to {json_file_path}")
- 
-# results = {}
-# for g in [1.04, 1.08, 1.12, 1.16, 1.2 , 1.24, 1.28, 1.32, 1.36, 1.4 ]:
-#     results[g]={}
-#     for m in [10]:
-#         print(f"Running at M{m}, gamma={g}")
-#         results[g][m]={}
-#         (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
-
-# json_file_path = "results_gamma_sweep.json"
-# with open(json_file_path, 'w') as json_file:
-#     json.dump(results, json_file, indent=2)
-
-# print(f"Results exported to {json_file_path}")
  
