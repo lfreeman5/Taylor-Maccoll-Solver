@@ -4,7 +4,7 @@
   <settings ppi="96">
     <identity>
       <id>5ab913a2-21af-4bfa-aa87-33c423447ee0</id>
-      <revision>5</revision>
+      <revision>6</revision>
     </identity>
     <calculation>
       <precision>4</precision>
@@ -338,7 +338,50 @@
         </content>
       </text>
     </region>
-    <region left="45" top="639" width="241" height="71" color="#000000" fontSize="10">
+    <region left="495" top="603" width="260" height="111" color="#000000" fontSize="10">
+      <math>
+        <input>
+          <e type="operand">1</e>
+          <e type="operand">g</e>
+          <e type="operand">1</e>
+          <e type="operator" args="2">-</e>
+          <e type="bracket">(</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">/</e>
+          <e type="operand">M.2</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operand">1</e>
+          <e type="operand">g</e>
+          <e type="operand">1</e>
+          <e type="operator" args="2">-</e>
+          <e type="bracket">(</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">/</e>
+          <e type="operand">M.surf</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">/</e>
+          <e type="bracket">(</e>
+          <e type="operand">g</e>
+          <e type="operand">g</e>
+          <e type="operand">1</e>
+          <e type="operator" args="2">-</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">^</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">1.209</e>
+        </result>
+      </math>
+    </region>
+    <region left="45" top="639" width="411" height="71" color="#000000" fontSize="10">
       <math>
         <input>
           <e type="operand">1</e>
@@ -360,9 +403,30 @@
           <e type="operator" args="2">-</e>
           <e type="operator" args="2">/</e>
           <e type="operator" args="2">^</e>
+          <e type="operand">1</e>
+          <e type="operand">g</e>
+          <e type="operand">1</e>
+          <e type="operator" args="2">-</e>
+          <e type="bracket">(</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">/</e>
+          <e type="operand">M.surf</e>
+          <e type="operand">2</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">+</e>
+          <e type="bracket">(</e>
+          <e type="operand">g</e>
+          <e type="operator" args="1">-</e>
+          <e type="operand">g</e>
+          <e type="operand">1</e>
+          <e type="operator" args="2">-</e>
+          <e type="operator" args="2">/</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="2">*</e>
         </input>
         <result action="numeric">
-          <e type="operand">92.8718</e>
+          <e type="operand">1.209</e>
         </result>
       </math>
     </region>
