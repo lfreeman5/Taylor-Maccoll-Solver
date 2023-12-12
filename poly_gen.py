@@ -18,12 +18,13 @@ def create_coeffs(json_name, key, orders=[3,4,6]):
             thetas = m_dict['thetas']
             dependent_vars = m_dict[key]
             for i in range(len(thetas)):
-                independent_variables.append([g,m,thetas[i]])
+                # independent_variables.append([g,m,thetas[i]])
+                independent_variables.append([thetas[i],m,g])
                 dependent_variables.append(dependent_vars[i])
 
 
     coefficients, r2_value = multivariablePolynomialFit(orders, independent_variables, dependent_variables)
-    return coefficients
+    return coefficients, r2_value
 
 def evaluate_function(coeffs, input_vector, orders=[3,4,6]): #input_vector takes the form [gamma, mach, theta]
     return multivariablePolynomialFunction(coeffs, orders, input_vector)
