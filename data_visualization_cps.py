@@ -2,9 +2,21 @@ import numpy as np
 from matplotlib import pyplot as plt
 import json
 from poly_gen import *
-json_path = "Results_Mtest.json"
+json_path = "Results_Polys.json"
 with open(json_path, 'r') as json_file:
     data = json.load(json_file)
+
+for g, g_dict in data.items():
+    g = float(g)
+    thetas=np.degrees(g_dict['8']['thetas'])
+    cps = g_dict['8']['cps']
+    plt.plot(thetas, cps, label = f"Gamma {g}")
+plt.title('Pressure Coefficient vs. Cone Angle at Mn=8')
+plt.xlabel('Cone Angle (deg)')
+plt.ylabel('C_P')
+plt.legend()
+plt.show()
+
 data = data['1.4']
 orders = [6,4,2] #theta, mach, gamma
 for mach, m_dict in data.items():
@@ -14,10 +26,11 @@ for mach, m_dict in data.items():
     betas = m_dict['betas']
     surface_machs = m_dict['surface_machs']
     cps = m_dict['cps']
-    plt.plot(thetas, cps, label = f"Mach {mach}")
+    plt.plot(np.degrees(thetas), cps, label = f"Mach {mach}")
 
-plt.xlabel('Theta (rad)')
-plt.ylabel('Pressure Coefficient')
+plt.title('Pressure Coefficient vs. Cone Angle at Gamma=1.4')
+plt.xlabel('Cone Angle (deg)')
+plt.ylabel('C_P')
 plt.legend()
 plt.show()
 
