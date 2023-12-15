@@ -4,7 +4,7 @@
   <settings ppi="96">
     <identity>
       <id>5ab913a2-21af-4bfa-aa87-33c423447ee0</id>
-      <revision>6</revision>
+      <revision>7</revision>
     </identity>
     <calculation>
       <precision>4</precision>
@@ -241,7 +241,7 @@
           <e type="bracket">(</e>
           <e type="operand">2</e>
           <e type="operator" args="2">/</e>
-          <e type="operand">M.2</e>
+          <e type="operand">M.surf</e>
           <e type="operand">2</e>
           <e type="operator" args="2">^</e>
           <e type="operator" args="2">*</e>
@@ -254,7 +254,7 @@
           <e type="bracket">(</e>
           <e type="operand">2</e>
           <e type="operator" args="2">/</e>
-          <e type="operand">M.surf</e>
+          <e type="operand">M.2</e>
           <e type="operand">2</e>
           <e type="operator" args="2">^</e>
           <e type="operator" args="2">*</e>
@@ -289,14 +289,14 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">1.9545</e>
+          <e type="operand">1.3371</e>
         </result>
       </math>
     </region>
-    <region left="495" top="441" width="280" height="38" color="#000000" fontSize="10">
+    <region left="495" top="441" width="280" height="53" color="#000000" fontSize="10">
       <text lang="eng" fontFamily="Arial" fontSize="10">
         <content>
-          <p>First half is some form of isentropic pressure relations.... but it looks backwards?</p>
+          <p>First half is some form of isentropic pressure relations.... but it looks backwards?<br />3.30</p>
         </content>
       </text>
     </region>
@@ -327,7 +327,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">0.0852</e>
+          <e type="operand">0.0301</e>
         </result>
       </math>
     </region>
@@ -427,37 +427,6 @@
         </input>
         <result action="numeric">
           <e type="operand">1.209</e>
-        </result>
-      </math>
-    </region>
-    <region left="351" top="774" width="80" height="59" color="#000000" fontSize="10">
-      <math>
-        <input>
-          <e type="operand">3</e>
-          <e type="operand">2</e>
-          <e type="operator" args="2">^</e>
-          <e type="operand">5</e>
-          <e type="operand">2</e>
-          <e type="operator" args="2">^</e>
-          <e type="operator" args="2">/</e>
-        </input>
-        <result action="numeric">
-          <e type="operand">0.36</e>
-        </result>
-      </math>
-    </region>
-    <region left="351" top="837" width="92" height="52" color="#000000" fontSize="10">
-      <math>
-        <input>
-          <e type="operand">3</e>
-          <e type="operand">5</e>
-          <e type="operator" args="2">/</e>
-          <e type="bracket">(</e>
-          <e type="operand">2</e>
-          <e type="operator" args="2">^</e>
-        </input>
-        <result action="numeric">
-          <e type="operand">0.36</e>
         </result>
       </math>
     </region>

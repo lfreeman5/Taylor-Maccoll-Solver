@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import json
 from poly_gen import *
-json_path = "results_Big.json"
+json_path = "Results_Polys.json"
 with open(json_path, 'r') as json_file:
     data = json.load(json_file)
 data = data['1.4']
@@ -18,7 +18,7 @@ cps_fit = np.polyval(coefficients, thetas_fit)
 plt.plot(thetas_fit, cps_fit, label='6th-order Polynomial Fit', color='red')
 
 # Calculate percent error
-percent_error = (-cps + np.polyval(coefficients, thetas)) / cps * 100
+abs_error = np.log10(abs((-cps + np.polyval(coefficients, thetas))))
 
 fig, ax1 = plt.subplots()
 ax1.scatter(thetas, cps, label='Original Data', color='blue')
@@ -28,10 +28,10 @@ ax1.set_ylabel('Cps', color='blue')
 ax1.tick_params('y', colors='blue')
 
 ax2 = ax1.twinx()
-ax2.plot(thetas, percent_error, label='Percent Error', color='green', marker='v')
+ax2.plot(thetas, abs_error, label='Percent Error', color='green', marker='v')
 ax2.set_ylabel('Percent Error', color='green')
 ax2.tick_params('y', colors='green')
-ax2.set_ylim([-10, 10])
+# ax2.set_ylim([-10, 10])
 
 lines, labels = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()

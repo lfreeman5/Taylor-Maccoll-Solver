@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
-import itertools
-import pandas as pd
 import json 
 
 
@@ -26,7 +24,6 @@ def longest_increasing_subsequence_indices(arr):
 def tangent_cone_pressure_coefficient(m_inf, m_surf, beta, gamma):
     # Equations from http://mae-nas.eng.usu.edu/MAE_6530_Web/New_Course/Section7/section2.2.1.pdf
     # CP from pressure ratio is 9.10 in Anderson Compressible
-
     mn_inf = m_inf * np.sin(beta)
     mn_post = np.sqrt((1 + (gamma - 1) / 2 * mn_inf ** 2) / (gamma * mn_inf ** 2 - (gamma - 1) / 2))
     deflection = np.arctan(2 * (m_inf ** 2 * np.sin(beta) ** 2 - 1) / 
@@ -42,7 +39,6 @@ def oblique_shock_relations(beta, m_inf, gamma=1.4):
     m_inf_normal = m_inf * np.sin(beta) #Anderson 4.7
     m2_normal = np.sqrt((m_inf_normal**2 + 2/(gamma-1)) / (2 * gamma / (gamma -1) * (m_inf_normal**2) - 1)) #Anderson 4.10
     deflection = np.arctan(2 / np.tan(beta) * (m_inf**2 * np.sin(beta) ** 2 - 1) / (m_inf ** 2 * (gamma + np.cos(2*beta)) +2) ) #Anderson 4.17
-    # print(f"beta: {beta}, deflection: {deflection}")
     m2 = m2_normal/(np.sin(beta-deflection)) #Anderson 4.12
     return [deflection, m2]
 
@@ -56,42 +52,25 @@ def taylorMaccoll(theta, s, gamma):
     #theta is the polar coordinate, marching inwards
     #s is the state vector [v_r, v_theta]
     v_r, v_theta = s
-    # print(f"For theta: {theta}, v_theta: {v_theta}")
     return np.array([v_theta, (v_theta ** 2 * v_r - (gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) * (2 * v_r + v_theta / np.tan(theta))) / ((gamma - 1) / 2 * (1 - v_r ** 2 - v_theta ** 2) - v_theta ** 2)])
 
 def stopCondition(theta, s, _):
-    v_r, v_theta = s
+    _, v_theta = s
     return -v_theta
 
 def solveConeAngle(beta, mach, gamma = 1.4):
-    # print(f"solveConeAngle Gamma {GAMMA}")
     [deflection, m2] = oblique_shock_relations(beta, mach, gamma)
     [vR, vTheta] = postShock(m2, deflection, beta, gamma)
-    # print(deflection, '<--deflection  m2-->', m2)
-    # print(vR, '<--vR  vTheta-->',vTheta)
     s_0 = np.array([vR, -vTheta])
-    # Solve_IVP should use an implicit method. I have had luck with Radau and BDF with low tolerances
-    sol = solve_ivp(taylorMaccoll, (beta, 0.0005), s_0, events=[stopCondition], method="Radau", atol=1e-10, rtol=1e-10, args=(gamma,))
-
-    # plt.plot(sol.t, sol.y[1])
-    # plt.grid(True)
-    # plt.title(f"Theta-V_theta plot for B {np.rad2deg(beta)} and M{mach} and g{GAMMA}")
-    # plt.show()
-    # print(f"Termination condition: {sol.status}, message: {sol.message}")
-    # print(sol.t_events[0][0])
-    # print(sol.y_events)
-
+    # Solve_IVP should use an implicit method. I have had luck with Radau and BDF with low tolerances. Very low tolerances should be used for generating datasets
+    sol = solve_ivp(taylorMaccoll, (beta, 0.0005), s_0, events=[stopCondition], method="BDF", atol=1e-10, rtol=1e-10, args=(gamma,))
     theta_f = sol.t_events[0][0]
-    # print(f"SOL Y EVENTS {sol.y_events}")
     v_r_f = sol.y_events[0][0][0]
-    # print(f'For M={mach} and B = {np.degrees(beta)}, the cone angle is: {np.degrees(theta_f)}')
     m_surf = np.sqrt((2/(gamma-1)) * (1/(1/(v_r_f**2) - 1)))
-    # print(m_surf) Sanity check - are these the same thing? Answer: yes, I derived the M_surf thing correctly
-    # m_surf = ((1/(v_r_f**2)-1)*((gamma-1)/2)) ** (-1/2)
-    # print(m_surf)
     return theta_f, m_surf
 
-def findShockParameters(theta_c, mach, gamma=1.4): #Uses slightly modified Newton-Raphson method to iterate to a cone angle. Highly dependent on initial conditions.
+def findShockParameters(theta_c, mach, gamma=1.4): 
+    #Uses slightly modified Newton-Raphson method to iterate to a cone angle. Highly dependent on initial conditions.
     beta_max = np.arccos(
         np.sqrt(
             (3 * mach**2 * gamma - np.sqrt((gamma + 1) * (8 * mach**2 * gamma +
@@ -123,33 +102,24 @@ def findShockParameters(theta_c, mach, gamma=1.4): #Uses slightly modified Newto
 
 def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
     #Implementation of Bisection method to rootfind minimum beta
-    # print(f"GTB Gamma: {gamma}")
     b_u=np.deg2rad(90)
     b_l=np.deg2rad(0)
     for _ in range(25):
         try:
             b_h=(b_u+b_l)/2
-            # print(f"Trying Beta: {np.rad2deg(b_h)}")
             solveConeAngle(b_h, mach, gamma=gamma)
-            #If code gets here, the halfway point is still valid. So the new upper is the halfway
             b_u=b_h
         except (IndexError, ValueError) as e:
-            #If it fails, the halfway point is below beta_min, so it's the new lower bound
             b_l=b_h
     beta_min = b_u
-    # print("Minimum Beta: ", np.rad2deg(beta_min))
     t,_=solveConeAngle(beta_min, mach)
-    # print(f"Minimum theta: {np.rad2deg(t)}")
-
-    # betas = np.deg2rad(np.geomspace(np.rad2deg(beta_min), 90, num=140))
-    max, min = np.emath.logn(12, beta_min), np.emath.logn(12, 90)
+    print(f"beta_min: {np.rad2deg(beta_min)}, theta_min: {np.rad2deg(t)}")
+    min, max = np.emath.logn(12, np.rad2deg(beta_min)), np.emath.logn(12, 90)
     betas = np.deg2rad(np.logspace(min, max, base=12,num=100))
-    np.log
     solvedBetas = []
     thetas = []
     msurfs = []
     for beta in betas:
-        # print(beta)
         try:
             (theta, msurf) = solveConeAngle(beta, mach, gamma=gamma)
             thetas.append(theta)
@@ -157,60 +127,31 @@ def generateThetaBeta(mach, gamma=1.4, resolution=0.25):
             solvedBetas.append(beta)
         except (IndexError, ValueError) as e:
             pass
-            # print(f"For beta: {beta}, mach: {mach}, gamma: {gamma}, the ODE did not solve")
     betas = solvedBetas
 
-    
-    # Find the longest increasing run indices
     (start, end) = longest_increasing_subsequence_indices(thetas)
-
-    # Extract the data for the longest run
     longest_thetas = thetas[start:end]
     longest_betas = betas[start:end]
     longest_machs = msurfs[start:end]
-
-    # plt.plot(longest_thetas, longest_betas, marker='o', color='g')
-    # plt.plot(thetas, betas, marker='x',linestyle='-')
-    # plt.show()
     return (longest_betas, longest_thetas, longest_machs)
 
+if __name__ == "main":
+    results = {}
+    for g in [1.1,1.2,1.3,1.4]:
+        results[g]={}
+        for m in [2,2.5,3,4,6,8,12,25]:
+            print(f"Running at M{m}, gamma={g}")
+            results[g][m]={}
+            (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
+            results[g][m]['cps'] = tangent_cone_pressure_coefficient(
+                np.array([m] * len(results[g][m]['thetas'])),
+                np.array(results[g][m]['surface_machs']),
+                np.array(results[g][m]['betas']),
+                np.array([g] * len(results[g][m]['thetas']))
+            ).tolist()
+    json_file_path = "Results_Polys.json"
+    with open(json_file_path, 'w') as json_file:
+        json.dump(results, json_file, indent=2)
 
-# generateThetaBeta(5,gamma=1.2)
-
-
-
-# results={}
-# fig, axs = plt.subplots(1, 2, figsize=(8, 10))
-
-# for m in [2.5,4,6,8,15]:
-#     results[m]={}
-#     (results[m]['betas'], results[m]['thetas'], results[m]['surface_machs']) = generateThetaBeta(m, resolution=0.05, gamma=1.1)
-#     axs[0].plot(results[m]['thetas'], results[m]['betas'], label=f"Mach {m}")
-#     axs[1].plot(results[m]['thetas'], results[m]['surface_machs'], label=f"Mach {m}")
-
-# axs[0].set_title('Betas vs. Thetas')
-# axs[0].legend()
-# axs[1].set_title('Surface Machs vs. Thetas')
-# axs[1].legend()
-# plt.show()
-
-
-results = {}
-for g in [1.1, 1.2, 1.3, 1.4]:
-    results[g]={}
-    for m in [2,4,6,8,10,12,15,20,25]:
-        print(f"Running at M{m}, gamma={g}")
-        results[g][m]={}
-        (results[g][m]['betas'], results[g][m]['thetas'], results[g][m]['surface_machs']) = generateThetaBeta(m, gamma=g)
-        results[g][m]['cps'] = tangent_cone_pressure_coefficient(
-            np.array([m] * len(results[g][m]['thetas'])),
-            np.array(results[g][m]['surface_machs']),
-            np.array(results[g][m]['betas']),
-            np.array([g] * len(results[g][m]['thetas']))
-        ).tolist()
-json_file_path = "Results_Big.json"
-with open(json_file_path, 'w') as json_file:
-    json.dump(results, json_file, indent=2)
-
-print(f"Results exported to {json_file_path}")
+    print(f"Results exported to {json_file_path}")
  
