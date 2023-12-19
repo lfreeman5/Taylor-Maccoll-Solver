@@ -34,8 +34,8 @@ Two-dimensional flows:
 
 from math import *
 import numpy
-from zero_solvers import secant as solve
-from zero_solvers import newton as solve_newton
+from gdtk.zero_solvers import secant as solve
+from gdtk.zero_solvers import newton as solve_newton
 
 # ---------------------------------------------------------------
 # Isentropic flow
