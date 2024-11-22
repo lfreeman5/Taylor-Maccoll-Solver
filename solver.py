@@ -77,23 +77,8 @@ def findShockParameters(theta_c, mach, gamma=1.4):
             mach**4 * gamma - 8 * mach**2 + mach**4 + 16)) - mach**2 + 4) / gamma
         ) / (2 * mach)
     )
-    b_u=np.deg2rad(90)
-    b_l=np.deg2rad(0)
-    for _ in range(20):
-        try:
-            b_h=(b_u+b_l)/2
-            solveConeAngle(b_h, mach, gamma=gamma)
-            b_u=b_h
-        except (IndexError, ValueError) as e:
-            b_l=b_h
-    beta_min = b_u
-    #beta_0=betamax-1
-    #slope = (theta(betamax) - theta(betamax-2))/2
-    #next_beta = beta_0-theta(beta_0)/slope
-    #if next_beta < 0 next_beta = beta_0/2
+    beta_min = np.arcsin(mach)
     beta = (beta_max + beta_min)/2
-    # print(f"Min beta: {beta_min} max beta: {beta_max}")
-
     i=0
     m_surf = 0
     last = -1
@@ -102,21 +87,13 @@ def findShockParameters(theta_c, mach, gamma=1.4):
         t, m_surf = solveConeAngle(beta, mach, gamma)
         t-=theta_c
         t_more = solveConeAngle(beta+stepSize,mach, gamma)[0]-theta_c
-        # t_less = solveConeAngle(beta-stepSize,mach, gamma)[0]-theta_c
-        # slope = (t_more-t_less)/(2*stepSize)
         slope = (t_more-t)/stepSize
         beta_next = beta - t/slope
         if(beta_next<beta_min):
-            # print(f'beta was lower, averaging between beta min and current beta {beta}')
             beta_next = (beta_min + beta)/2
-        # print("Beta Guess: ", beta)
-        # print("Slope: ", slope)
-        # print("Guess at next Beta: ", beta_next)
         if(abs(beta_next-last)/abs(last)<0.0001):
-            # print(f'breaking at {i}')
             break
         last=beta_next
-        # input("Press enter to continue")
         beta=beta_next
         i+=1
     return beta, m_surf
